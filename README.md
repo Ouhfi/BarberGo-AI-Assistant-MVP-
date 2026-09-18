@@ -1,165 +1,117 @@
-# 💈 BarberGo
+# BARBERO - Real-Time Neighborhood Barber Booking
 
-> **Book a Professional Barber at Your Home**
-
-BarberGo is a modern mobile platform that connects customers with professional barbers who provide home haircut services.
-
-Instead of visiting a barbershop, customers can easily browse nearby barbers, choose their preferred services, schedule an appointment, and book a barber to come directly to their location.
-
-The platform also provides barbers with a dedicated application to manage their services, availability, bookings, and customers, while administrators can monitor and manage the entire platform through a web dashboard.
+`BARBERO` is a real-time, neighborhood-based barber booking service, inspired by inDrive, designed for seamless home service requests. It prioritizes speed, simplicity, and a high-end, minimalist experience.
 
 ---
 
-# 🎯 Vision
+## Features
 
-Our vision is to simplify the barber booking experience by bringing professional grooming services directly to customers' homes through a seamless, secure, and user-friendly digital platform.
-
----
-
-# ❓ Problem
-
-Many customers:
-
-* Don't have time to visit a barbershop.
-* Prefer receiving grooming services at home.
-* Spend time waiting in queues.
-* Have difficulty finding trusted barbers nearby.
-
-At the same time, many professional barbers struggle to attract new customers and efficiently manage appointments.
+*   **Ultra-Minimalist Design:** Dark Mode, clean geometric shapes, and a soft sage green (#8DA399) accent for calmness.
+*   **Neighborhood Focus:** No complex maps. Users select their neighborhood, and requests are instantly routed to all barbers in that specific zone.
+*   **Real-Time Broadcast (inDrive Style):** Utilizing WebSockets (Socket.io), new orders are pushed instantly to all active barbers in the relevant neighborhood "room."
+*   **Protected Access:** Comprehensive authentication using JWT (JSON Web Tokens) and secure password hashing with bcrypt.
 
 ---
 
-# 💡 Solution
+## Architecture Overview
 
-BarberGo provides an on-demand platform that allows customers to:
+The project is structured with a distinct separation of concerns, divided into two main parts:
 
-* Discover professional barbers nearby.
-* View barber profiles, ratings, services, and pricing.
-* Schedule home appointments.
-* Book services in just a few steps.
+### 1. Backend (Server)
+Located in `/backend`. This is the core logic and data layer.
 
-Barbers can:
+**Tech Stack:**
+*   **Node.js & Express:** For the application and API.
+*   **PostgreSQL:** Relational database for persistent storage.
+*   **Sequelize (ORM):** To manage database models, relations, and migrations.
+*   **Socket.io:** For real-time, bidirectional communication.
+*   **JWT & bcrypt:** For security and authentication.
 
-* Receive booking requests.
-* Manage their availability.
-* Offer multiple services.
-* Grow their business.
+**Key Components:**
+*   **ROUTER:** Receives requests and routes them (`/api/auth`, `/api/orders`, `/api/neighborhoods`).
+*   **MIDDLEWARE:** Intercepts requests for authentication (verifies JWT) and validation (using schema).
+*   **CONTROLLER:** The main business logic ("The Brain"). Handles data processing and communicates with the database and WebSockets.
+*   **DATABASE:** The persistent data layer.
+*   **WEBSOCKETS (SOCKET.IO):** Manages connection rooms (`neighborhood_${id}`). Emits new orders instantly to the correct room.
 
-Administrators can:
+### 2. Frontend (Mobile App)
+Located in `/mobile`. A React Native application built with Expo and TypeScript.
 
-* Verify barber accounts.
-* Monitor bookings.
-* Manage platform operations.
+**Tech Stack:**
+*   **React Native & Expo:** For cross-platform mobile development.
+*   **TypeScript:** For typed, clean code.
+*   **Socket.io-client:** To connect and listen for real-time events.
 
----
-
-# 👥 Platform Products
-
-The BarberGo platform consists of three independent applications:
-
-## 📱 Customer Mobile App
-
-Customers can:
-
-* Register and log in.
-* Browse nearby barbers.
-* View barber profiles.
-* Book home haircut services.
-* Manage bookings.
-* View booking history.
+**Key Components:**
+*   **CLIENT/UI:** Minimalist interface, focused on essential tasks (Login/Register, Create Order, View Order, Accept Order).
+*   **AUTHENTICATION:** Protected routes, login/register forms, manages JWT.
 
 ---
 
-## 💈 Barber Mobile App
+## Database Schema (3 Key Tables)
 
-Barbers can:
+**1. Neighborhoods**
+*   `id` (PK)
+*   `name` (e.g., "Hay Elmouahidine")
 
-* Register as professionals.
-* Manage services and pricing.
-* Accept or reject booking requests.
-* Update availability.
-* Complete appointments.
+**2. Users**
+*   `id` (PK)
+*   `phone` (Unique)
+*   `password` (Hashed)
+*   `role` (ENUM: CUSTOMER, BARBER)
+*   `neighborhood_id` (FK, Nullable - *for Barbers only*)
 
----
-
-## 🖥️ Admin Dashboard
-
-Administrators can:
-
-* Manage customers.
-* Verify barbers.
-* Monitor bookings.
-* Manage platform data.
-
----
-
-# 🤖 BarberGo AI Assistant
-
-BarberGo includes an AI-powered assistant specialized in barbering and grooming.
-
-The assistant helps customers:
-
-* Choose suitable hairstyles.
-* Learn about haircut styles.
-* Receive beard care recommendations.
-* Get hair care advice.
-* Understand booking procedures.
-
-The AI assistant focuses exclusively on barber-related topics and enhances the customer experience before booking.
+**3. Orders**
+*   `id` (PK)
+*   `customer_id` (FK)
+*   `barber_id` (FK, Nullable - *set when accepted*)
+*   `neighborhood_id` (FK)
+*   `service_details` (JSON/TEXT)
+*   `status` (ENUM: PENDING, ACCEPTED, COMPLETED, CANCELED)
 
 ---
 
-# 🚀 MVP Features
+## Setup and Usage
 
-### Customer
+### Backend
+1.  **Prerequisites:** Install Node.js, NPM, and PostgreSQL. Create an empty PostgreSQL database.
+2.  **Clone the project:** `git clone ...` and `cd backend`.
+3.  **Install dependencies:** `npm install`.
+4.  **Configure environment:** Create a `.env` file based on `.env.example`. Set your database URL (`DB_URL`) and JWT secret (`JWT_SECRET`).
+5.  **Run Migrations:** `npx sequelize-cli db:migrate` and `npx sequelize-cli db:seed:all` (optional, to seed neighborhoods).
+6.  **Run the Server:** `npm start` (or `npm run dev` with nodemon).
 
-* Authentication
-* Browse Barbers
-* Barber Profile
-* Book Appointment
-* Booking History
-
-### Barber
-
-* Authentication
-* Manage Services
-* Manage Availability
-* Accept or Reject Bookings
-* Complete Services
-
-### Admin
-
-* Dashboard
-* Manage Users
-* Verify Barbers
-* Manage Bookings
-
-### AI Assistant
-
-* Haircut recommendations
-* Grooming guidance
-* Booking assistance
-* Frequently asked questions
+### Mobile (Expo)
+1.  **Prerequisites:** Install Node.js, NPM, and the Expo Go app on your phone.
+2.  **Clone and cd:** `cd mobile`.
+3.  **Install dependencies:** `npm install`.
+4.  **Configure:** Update the API base URL in your config file to point to your backend server (e.g., `http://192.168.1.10:3000`).
+5.  **Run the app:** `npx expo start`. Scan the QR code with your phone.
 
 ---
 
-# 🌍 Future Vision
+## Design Guidelines
 
-Future releases may include:
-
-* Real-time barber tracking.
-* Online payments.
-* In-app chat.
-* Push notifications.
-* Loyalty rewards.
-* Referral program.
-* AI hairstyle recognition.
-* AI face-shape analysis.
-* Multi-language support.
+*   **Mode:** Dark Mode
+*   **Color Palette:**
+    *   `Background`: `#121212` (Deep black/dark grey)
+    *   `Primary Accent`: `#8DA399` (Soft Sage Green - used for buttons, icons, interactive elements to convey calmness)
+    *   `Typography`: `#FFFFFF` (High-contrast white for headers/active text), `#A0A0A0` (Secondary grey for details)
 
 ---
 
-# ❤️ Mission
+## Contributing
 
-Our mission is to modernize the traditional barber industry by making home grooming services more accessible, reliable, and convenient for everyone while helping independent barbers grow their businesses.
+Contributions are welcome. Please open an issue or submit a pull request for any bugs or features.
 
+---
+
+## License
+
+This project is licensed under the MIT License.
+
+---
+
+## Support
+
+For any questions or to ask for help, please contact the project author. We aim to support a complete, end-to-end guide.
